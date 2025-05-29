@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>多语言时钟展示</title>
+  <style>
+    :root {
+      --main-bg: #f7f8fa;
+      --card-bg: rgba(255,255,255,0.9);
+      --text: #222;
+      --accent: #0078ff;
+      --btn-bg: #f0f4fa;
+      --btn-active: #fff;
+      --btn-text: #222;
+      --shadow: 0 8px 32px rgba(0,0,0,0.12);
+    }
+    [data-theme="dark"] {
+      --main-bg: #141c2b;
+      --card-bg: rgba(30,36,54,0.96);
+      --text: #f1f3fa;
+      --accent: #6bbcff;
+      --btn-bg: #232c3d;
+      --btn-active: #1a2330;
+      --btn-text: #f1f3fa;
+      --shadow: 0 8px 32px rgba(0,0,0,0.32);
+    }
+    body {
+      background: var(--main-bg);
+      color: var(--text);
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Hiragino Sans", Arial, sans-serif;
+      transition: background 0.4s;
+    }
+    .container {
+      max-width: 420px;
+      margin: 32px auto 0 auto;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 22px 18px 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: background 0.4s;
+    }
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .header h1 {
+      font-size: 1.45rem;
+      letter-spacing: 1px;
+      margin: 0;
+      font-weight: 600;
+      text-align: center;
+    }
+    .controls {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+    .mode-controls, .language-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .theme-toggle {
+      width: 42px;
+      height: 24px;
+      border-radius: 12px;
+      background: var(--btn-bg);
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      margin-left: 8px;
+      border: 1.5px solid var(--accent);
+      transition: background 0.3s;
+      position: relative;
+    }
+    .toggle-circle {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--accent);
+      position: absolute;
+      left: 3px;
+      top: 2.5px;
+      transition: left 0.3s;
+    }
+    [data-theme="dark"] .toggle-circle {
+      left: 21px;
+      background: #fff;
+    }
+    .btn {
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      border: none;
+      border-radius: 8px;
+      padding: 7px 13px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      outline: none;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      font-weight: 500;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .btn.active, .btn:active {
+      background: var(--btn-active);
+      color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0,120,255,0.08);
+    }
+    .language-controls label {
+      font-size: 0.97em;
+      margin-right: 2px;
+      color: var(--text);
+      opacity: 0.85;
+    }
+    select {
+      font-size: 1em;
+      border-radius: 7px;
+      border: 1px solid #bbb;
+      padding: 4px 8px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      outline: none;
+      transition: background 0.2s, color 0.2s;
+    }
+    .date-card {
+      background: var(--btn-bg);
+      border-radius: 9px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+      padding: 10px 0 7px 0;
+      text-align: center;
+      font-size: 1.12rem;
+      font-weight: 500;
+      letter-spacing: 1px;
+      margin-bottom: 2px;
+    }
+    .clock-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 9px;
+    }
+    .digital-clock, .analog-clock {
+      background: var(--btn-bg);
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      padding: 16px 0;
+      min-width: 200px;
+      min-height: 50px;
+      margin-bottom: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: background 0.4s;
+    }
+    .digital-clock {
+      font-size: 2.5rem;
+      font-family: 'Consolas', 'Menlo', 'Monaco', monospace;
+      letter-spacing: 2px;
+      font-weight: 700;
+    }
+    .analog-clock {
+      min-width: 0;
+      min-height: 0;
+      padding: 12px 0 8px 0;
+    }
+    .analog-canvas {
+      background: #e7e8ed;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+      display: block;
+      margin: 0 auto;
+      transition: background 0.4s;
+    }
+    [data-theme="dark"] .analog-canvas {
+      background: #232c3d;
+    }
+    .clock-label {
+      font-size: 1.01em;
+      color: var(--accent);
+      margin-top: 7px;
+      margin-bottom: 2px;
+      font-weight: 500;
+      letter-spacing: 1px;
+    }
+    .dial-select-area {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 6px;
+      margin: 7px 0 0 0;
+    }
+    .dial-select-area label {
+      font-size: 0.98em;
+      color: var(--text);
+      opacity: 0.75;
+    }
+    .hidden {
+      display: none !important;
+    }
+    @media (max-width: 520px) {
+      .container { max-width: 98vw; padding: 8px 2px 10px 2px;}
+      .header h1 { font-size: 1.1rem;}
+      .digital-clock { font-size: 1.5rem;}
+      .date-card { font-size: 1rem;}
+      .analog-canvas { width: 170px !important; height: 170px !important;}
+    }
+    @media (max-width: 400px) {
+      .container { padding: 4px 1px 6px 1px;}
+      .digital-clock { font-size: 1.08rem;}
+      .date-card { font-size: 0.92rem;}
+      .analog-canvas { width: 120px !important; height: 120px !important;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="main-container">
+    <header class="header">
+      <h1 id="title">多语言时钟展示</h1>
+      <div class="controls">
+        <div class="mode-controls">
+          <button class="btn active" id="digital-btn"><span>⌚</span><span id="digital-label">数字时钟</span></button>
+          <button class="btn" id="analog-btn"><span>🕰️</span><span id="analog-label">模拟时钟</span></button>
+          <button class="btn" id="both-btn"><span>🔀</span><span id="both-label">同时显示</span></button>
+        </div>
+        <div class="language-controls">
+          <label for="language-select" id="lang-label">选择语言：</label>
+          <select id="language-select">
+            <option value="zh">中文</option>
+            <option value="en">English</option>
+            <option value="ja">日本語</option>
+          </select>
+        </div>
+        <div class="theme-toggle" id="theme-toggle" title="切换主题">
+          <div class="toggle-circle"></div>
+        </div>
+      </div>
+    </header>
+    <div class="date-card" id="date-card"></div>
+    <div class="clock-area">
+      <div class="digital-clock" id="digital-clock"></div>
+      <div class="analog-clock hidden" id="analog-clock">
+        <canvas class="analog-canvas" id="analog-canvas" width="220" height="220"></canvas>
+        <div class="dial-select-area">
+          <label for="dial-select" id="dial-label">表盘：</label>
+          <select id="dial-select">
+            <option value="classic">经典款</option>
+            <option value="simple">极简款</option>
+            <option value="rolex">劳力士风</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <footer style="text-align:center;opacity:0.6;font-size:0.93em;margin-top:8px;">
+      &copy; 2025 多语言时钟展示
+    </footer>
+  </div>
+  <script>
+    // 多语言资源
+    const i18n = {
+      zh: {
+        title: "多语言时钟展示",
+        digital: "数字时钟",
+        analog: "模拟时钟",
+        both: "同时显示",
+        langLabel: "选择语言：",
+        dialLabel: "表盘：",
+        dateFmt: (d) => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${"日一二三四五六"[d.getDay()]}`,
+        months: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+        weekdays: ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"],
+        dials: ["经典款","极简款","劳力士风"],
+        themeTip: "切换主题"
+      },
+      en: {
+        title: "Multilingual Clock Demo",
+        digital: "Digital",
+        analog: "Analog",
+        both: "Both",
+        langLabel: "Language:",
+        dialLabel: "Dial:",
+        dateFmt: (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")} ${["Sun","Mon","Tue","Wed","Thu","Fri","Sat"][d.getDay()]}`,
+        months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+        weekdays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        dials: ["Classic","Minimal","Rolex"],
+        themeTip: "Toggle theme"
+      },
+      ja: {
+        title: "多言語時計デモ",
+        digital: "デジタル",
+        analog: "アナログ",
+        both: "両方",
+        langLabel: "言語：",
+        dialLabel: "文字盤：",
+        dateFmt: (d) => `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 (${["日","月","火","水","木","金","土"][d.getDay()]})`,
+        months: ["1月","2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月"],
+        weekdays: ["日曜日","月曜日","火曜日","水曜日","木曜日","金曜日","土曜日"],
+        dials: ["クラシック","ミニマル","ロレックス風"],
+        themeTip: "テーマ切替"
+      }
+    };
+
+    // 状态
+    let state = {
+      lang: "zh",
+      theme: "light",
+      displayMode: "digital", // digital, analog, both
+      dial: "classic"
+    };
+
+    // DOM
+    const title = document.getElementById('title');
+    const digitalBtn = document.getElementById('digital-btn');
+    const analogBtn = document.getElementById('analog-btn');
+    const bothBtn = document.getElementById('both-btn');
+    const digitalLabel = document.getElementById('digital-label');
+    const analogLabel = document.getElementById('analog-label');
+    const bothLabel = document.getElementById('both-label');
+    const langLabel = document.getElementById('lang-label');
+    const languageSelect = document.getElementById('language-select');
+    const themeToggle = document.getElementById('theme-toggle');
+    const dateCard = document.getElementById('date-card');
+    const digitalClock = document.getElementById('digital-clock');
+    const analogClock = document.getElementById('analog-clock');
+    const analogCanvas = document.getElementById('analog-canvas');
+    const dialSelect = document.getElementById('dial-select');
+    const dialLabel = document.getElementById('dial-label');
+    const container = document.getElementById('main-container');
+
+    // 多语言UI更新
+    function updateI18n() {
+      const t = i18n[state.lang];
+      title.textContent = t.title;
+      digitalLabel.textContent = t.digital;
+      analogLabel.textContent = t.analog;
+      bothLabel.textContent = t.both;
+      langLabel.textContent = t.langLabel;
+      dialLabel.textContent = t.dialLabel;
+      themeToggle.title = t.themeTip;
+      // 表盘选项
+      Array.from(dialSelect.options).forEach((opt,i)=>opt.textContent = t.dials[i]);
+    }
+
+    // 日期显示
+    function updateDate() {
+      const t = i18n[state.lang];
+      const now = new Date();
+      dateCard.textContent = t.dateFmt(now);
+    }
+
+    // 数字时钟
+    function updateDigitalClock() {
+      const now = new Date();
+      let h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
+      digitalClock.textContent = [
+        h.toString().padStart(2,'0'),
+        m.toString().padStart(2,'0'),
+        s.toString().padStart(2,'0')
+      ].join(':');
+    }
+
+    // 模拟时钟表盘绘制
+    function drawAnalogClock() {
+      const ctx = analogCanvas.getContext('2d');
+      const W = analogCanvas.width, H = analogCanvas.height;
+      ctx.clearRect(0,0,W,H);
+      // 基础参数
+      const R = W/2-15;
+      const centerX = W/2, centerY = H/2;
+      // 主题色
+      const isDark = document.body.getAttribute('data-theme') === 'dark';
+      const accent = isDark ? "#6bbcff" : "#0078ff";
+      // 表盘风格
+      let dialType = state.dial;
+      // 背景
+      ctx.save();
+      if(dialType==="rolex") {
+        // 劳力士风格渐变
+        let grad = ctx.createRadialGradient(centerX,centerY,20,centerX,centerY,R+10);
+        grad.addColorStop(0, isDark?"#2e3c4b":"#e7e8ed");
+        grad.addColorStop(1, isDark?"#1f2b3b":"#b6c2d1");
+        ctx.fillStyle = grad;
+      } else if(dialType==="simple") {
+        ctx.fillStyle = isDark?"#232c3d":"#f7f8fa";
+      } else {
+        ctx.fillStyle = isDark?"#232c3d":"#e7e8ed";
+      }
+      ctx.beginPath();
+      ctx.arc(centerX,centerY,R+10,0,2*Math.PI);
+      ctx.fill();
+      ctx.restore();
+
+      // 刻度
+      ctx.save();
+      for(let i=0;i<60;i++) {
+        let angle = (Math.PI*2/60)*i;
+        let len = (i%5===0) ? (dialType==="simple"?8:16) : 6;
+        ctx.beginPath();
+        ctx.strokeStyle = (i%5===0) ? accent : (isDark?"#aaa":"#888");
+        ctx.lineWidth = (i%5===0) ? (dialType==="rolex"?3:2) : 1;
+        let r1 = R-2, r2 = R-len;
+        ctx.moveTo(centerX + r1*Math.cos(angle), centerY + r1*Math.sin(angle));
+        ctx.lineTo(centerX + r2*Math.cos(angle), centerY + r2*Math.sin(angle));
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // 数字
+      if(dialType!=="simple") {
+        ctx.save();
+        ctx.font = dialType==="rolex" ? "bold 22px Arial" : "bold 18px Arial";
+        ctx.fillStyle = isDark?"#fff":"#222";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        for(let n=1;n<=12;n++) {
+          let angle = (Math.PI/6)*(n-3);
+          let r = R-32;
+          ctx.fillText(n, centerX + r*Math.cos(angle), centerY + r*Math.sin(angle));
+        }
+        ctx.restore();
+      }
+
+      // 劳力士皇冠
+      if(dialType==="rolex") {
+        ctx.save();
+        ctx.translate(centerX, centerY-R+24);
+        ctx.scale(1.1,1.1);
+        ctx.beginPath();
+        ctx.strokeStyle = "#e2c100";
+        ctx.lineWidth = 2.1;
+        ctx.moveTo(0,0); ctx.lineTo(-8,12); ctx.lineTo(-4,9); ctx.lineTo(0,13); ctx.lineTo(4,9); ctx.lineTo(8,12); ctx.lineTo(0,0);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // 指针
+      const now = new Date();
+      let h = now.getHours()%12, m = now.getMinutes(), s = now.getSeconds();
+      // 时针
+      ctx.save();
+      ctx.strokeStyle = accent;
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      let hAngle = (Math.PI/6)*(h+m/60+s/3600)-Math.PI/2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (R-60)*Math.cos(hAngle), centerY + (R-60)*Math.sin(hAngle));
+      ctx.stroke();
+      ctx.restore();
+      // 分针
+      ctx.save();
+      ctx.strokeStyle = isDark?"#fff":"#222";
+      ctx.lineWidth = 4;
+      let mAngle = (Math.PI/30)*(m+s/60)-Math.PI/2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.lineTo(centerX + (R-38)*Math.cos(mAngle), centerY + (R-38)*Math.sin(mAngle));
+      ctx.stroke();
+      ctx.restore();
+      // 秒针
+      ctx.save();
+      ctx.strokeStyle = "#e34c4c";
+      ctx.lineWidth = 2;
+      let sAngle = (Math.PI/30)*s-Math.PI/2;
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY+8);
+      ctx.lineTo(centerX + (R-24)*Math.cos(sAngle), centerY + (R-24)*Math.sin(sAngle));
+      ctx.stroke();
+      ctx.restore();
+
+      // 圆心
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(centerX,centerY,7,0,2*Math.PI);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // 显示模式切换
+    function updateDisplayMode() {
+      digitalClock.classList.toggle('hidden', state.displayMode === 'analog');
+      analogClock.classList.toggle('hidden', state.displayMode === 'digital');
+      [digitalBtn, analogBtn, bothBtn].forEach(btn => btn.classList.remove('active'));
+      if (state.displayMode === 'digital') digitalBtn.classList.add('active');
+      else if (state.displayMode === 'analog') analogBtn.classList.add('active');
+      else bothBtn.classList.add('active');
+      // 如果是both，两个都显示
+      if(state.displayMode==="both") {
+        digitalClock.classList.remove('hidden');
+        analogClock.classList.remove('hidden');
+      }
+    }
+
+    // 主题切换
+    function setTheme(theme) {
+      document.body.setAttribute('data-theme', theme);
+      state.theme = theme;
+      // 重新绘制表盘
+      drawAnalogClock();
+    }
+
+    // 事件绑定
+    digitalBtn.onclick = ()=>{ state.displayMode="digital"; updateDisplayMode(); };
+    analogBtn.onclick = ()=>{ state.displayMode="analog"; updateDisplayMode(); };
+    bothBtn.onclick = ()=>{ state.displayMode="both"; updateDisplayMode(); };
+    languageSelect.onchange = ()=>{
+      state.lang = languageSelect.value;
+      updateI18n();
+      updateDate();
+      drawAnalogClock();
+    };
+    themeToggle.onclick = ()=>{
+      setTheme(state.theme==="light"?"dark":"light");
+    };
+    dialSelect.onchange = ()=>{
+      state.dial = dialSelect.value;
+      drawAnalogClock();
+    };
+
+    // 初始化
+    function init() {
+      // 主题
+      setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? "dark" : "light");
+      // 语言
+      updateI18n();
+      // 日期
+      updateDate();
+      // 显示模式
+      updateDisplayMode();
+      // 表盘
+      drawAnalogClock();
+      // 定时器
+      setInterval(()=>{
+        updateDigitalClock();
+        updateDate();
+        drawAnalogClock();
+      }, 1000);
+      updateDigitalClock();
+    }
+    init();
+  </script>
+</body>
+</html>
