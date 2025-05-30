@@ -1,8 +1,3 @@
-Okay, based on the information provided in the source, I will generate a documentation document in English, Chinese, and Japanese for the "Multilingual Clock Display Project".
-
-Here is the documentation based on the source:
-
----
 
 ### Multilingual Clock Display Project Documentation
 
